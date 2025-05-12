@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Alembic-specific generated files (if any)
+migrations/versions/*.pyc
+migrations/versions/__pycache__/
+
 # C extensions
 *.so
 
