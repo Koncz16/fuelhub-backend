@@ -1,27 +1,37 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
-from models.fuel_data import FuelData
-from schemas.fuel import FuelDataCreate
-
-
-async def create_fuel_data(db: AsyncSession, fuel: FuelDataCreate) -> FuelData:
-    new_fuel = FuelData(**fuel.model_dump())
-    db.add(new_fuel)
-    await db.commit()
-    await db.refresh(new_fuel)
-    return new_fuel
+from models.fuel_data import Fuel
+from schemas.fuel import FuelCreate
 
 
-async def create_many_fuel_data(db: AsyncSession, fuels: list[FuelDataCreate]) -> list[FuelData]:
-    fuel_objects = [FuelData(**fuel.model_dump()) for fuel in fuels]
-    db.add_all(fuel_objects)
-    await db.commit()
-    for fuel in fuel_objects:
+class FuelRepository:
+    @staticmethod
+    async def create(db: AsyncSession, fuel_in: FuelCreate) -> Fuel:
+        fuel = Fuel(**fuel_in.dict())
+        db.add(fuel)
+        await db.commit()
         await db.refresh(fuel)
-    return fuel_objects
+        return fuel
 
+    @staticmethod
+    async def get(db: AsyncSession, fuel_id: int) -> Fuel | None:
+        result = await db.execute(select(Fuel).where(Fuel.id == fuel_id))
+        return result.scalar_one_or_none()
 
-async def get_all_fuel_data(db: AsyncSession) -> list[FuelData]:
-    result = await db.execute(select(FuelData))
-    return result.scalars().all()
+    @staticmethod
+    async def list(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[Fuel]:
+        result = await db.execute(select(Fuel).offset(skip).limit(limit))
+        return result.scalars().all()
+
+    @staticmethod
+    async def update(db: AsyncSession, fuel: Fuel, fuel_in: FuelCreate) -> Fuel:
+        for field, value in fuel_in.dict().items():
+            setattr(fuel, field, value)
+        await db.commit()
+        await db.refresh(fuel)
+        return fuel
+
+    @staticmethod
+    async def delete(db: AsyncSession, fuel: Fuel) -> None:
+        await db.delete(fuel)
+        await db.commit()

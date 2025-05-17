@@ -6,6 +6,9 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import pool
 from alembic import context
 from dotenv import load_dotenv
+from models.station_data import Station 
+from models.fuel_data import Fuel
+
 
 # Load environment variables
 load_dotenv()
@@ -18,7 +21,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import your Base
-from models.fuel_data import Base  
+from core.config import Base  
 target_metadata = Base.metadata
 
 # Get DB info from .env

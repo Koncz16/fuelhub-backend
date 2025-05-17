@@ -1,16 +1,14 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Float, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+from core.config import Base
 
-Base = declarative_base()
-
-class FuelData(Base):
-    __tablename__ = "fuel_data"
+class Fuel(Base):
+    __tablename__ = "fuels"
 
     id = Column(Integer, primary_key=True, index=True)
-    price = Column(String, nullable=False)
-    fuel_type = Column(String, nullable=False)
-    brand = Column(String, nullable=False)
-    city = Column(String, nullable=False)
-    county = Column(String, nullable=False)
-    address = Column(String, nullable=False)
-    postal_code = Column(String, nullable=True)
+    type = Column(String, nullable=False)  
+    quality = Column(String, nullable=False)  
+    price = Column(Float, nullable=False)  
+    station_id = Column(Integer, ForeignKey("stations.id")) 
+
+    station = relationship("Station", back_populates="fuels")

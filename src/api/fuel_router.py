@@ -1,25 +1,47 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from schemas.fuel import FuelDataCreate, FuelDataRead
-from services import fuel_service
-from core.config import AsyncSessionLocal
+from schemas.fuel import FuelCreate, FuelRead
+from services.fuel_service import FuelService
+from core.config import AsyncSessionLocal  # your session factory
 
-router = APIRouter(prefix="/fuel", tags=["Fuel"])
+router = APIRouter(prefix="/fuels", tags=["Fuels"])
 
 async def get_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         yield session
 
-@router.post("/", response_model=FuelDataRead)
-async def create_fuel_entry(data: FuelDataCreate, db: AsyncSession = Depends(get_db)):
-    return await fuel_service.create_fuel(db, data)
+@router.post("/", response_model=FuelRead, status_code=status.HTTP_201_CREATED)
+async def create_fuel(data: FuelCreate, db: AsyncSession = Depends(get_db)):
+    svc = FuelService(db)
+    return await svc.create_fuel(data)
 
-@router.post("/bulk", response_model=List[FuelDataRead])
-async def create_fuel_entries_bulk(data: List[FuelDataCreate], db: AsyncSession = Depends(get_db)):
-    return await fuel_service.create_many_fuels(db, data)
+@router.get("/{fuel_id}", response_model=FuelRead)
+async def read_fuel(fuel_id: int, db: AsyncSession = Depends(get_db)):
+    svc = FuelService(db)
+    fuel = await svc.get_fuel(fuel_id)
+    if not fuel:
+        raise HTTPException(status_code=404, detail="Fuel not found")
+    return fuel
 
-@router.get("/", response_model=List[FuelDataRead])
-async def list_fuel_entries(db: AsyncSession = Depends(get_db)):
-    return await fuel_service.list_fuel(db)
+@router.get("/", response_model=List[FuelRead])
+async def list_fuels(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+    svc = FuelService(db)
+    return await svc.list_fuels(skip, limit)
+
+@router.put("/{fuel_id}", response_model=FuelRead)
+async def update_fuel(fuel_id: int, data: FuelCreate, db: AsyncSession = Depends(get_db)):
+    svc = FuelService(db)
+    updated = await svc.update_fuel(fuel_id, data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Fuel not found")
+    return updated
+
+@router.delete("/{fuel_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_fuel(fuel_id: int, db: AsyncSession = Depends(get_db)):
+    svc = FuelService(db)
+    success = await svc.delete_fuel(fuel_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Fuel not found")
+    return

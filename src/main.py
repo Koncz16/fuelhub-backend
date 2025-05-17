@@ -3,9 +3,9 @@ from dotenv import load_dotenv
 import os
 import uvicorn
 
-from api import api_router, fuel_router
-from core.config import engine
-from models.fuel_data import Base
+from api import api_router, fuel_router, station_router
+from core.config import engine, Base
+from models.station_data import Station
 
 load_dotenv()
 
@@ -16,6 +16,7 @@ app = FastAPI(
 
 app.include_router(api_router.router)
 app.include_router(fuel_router.router)
+app.include_router(station_router.router)
 
 
 @app.on_event("startup")
